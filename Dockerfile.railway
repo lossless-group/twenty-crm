@@ -34,6 +34,10 @@ COPY packages/twenty-utils/package.json ./packages/twenty-utils/
 COPY packages/twenty-shared/package.json ./packages/twenty-shared/
 COPY packages/twenty-emails/package.json ./packages/twenty-emails/
 
+# Copy patches directory (required for yarn install)
+RUN mkdir -p ./packages/twenty-server/patches
+COPY packages/twenty-server/patches/ ./packages/twenty-server/patches/
+
 # Install dependencies
 RUN yarn install --immutable
 
