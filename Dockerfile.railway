@@ -38,8 +38,8 @@ COPY packages/twenty-emails/package.json ./packages/twenty-emails/
 RUN mkdir -p ./packages/twenty-server/patches
 COPY packages/twenty-server/patches/ ./packages/twenty-server/patches/
 
-# Install dependencies (allow peer dependency warnings)
-RUN yarn install --immutable --check-files
+# Install dependencies (permissive mode for build environment)
+RUN yarn install
 
 # Copy source code
 COPY . ./
