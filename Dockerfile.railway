@@ -23,11 +23,16 @@ COPY package.json yarn.lock ./
 COPY .yarnrc.yml ./
 COPY .yarn ./.yarn
 
+# Create workspace directories for all packages
+RUN mkdir -p packages/twenty-server packages/twenty-front packages/twenty-ui packages/twenty-utils packages/twenty-shared packages/twenty-emails packages/twenty-zapier packages/twenty-website packages/twenty-e2e-testing packages/twenty-apps packages/twenty-cli packages/twenty-docker
+
 # Copy workspace package.json files
 COPY packages/twenty-server/package.json ./packages/twenty-server/
 COPY packages/twenty-front/package.json ./packages/twenty-front/
 COPY packages/twenty-ui/package.json ./packages/twenty-ui/
 COPY packages/twenty-utils/package.json ./packages/twenty-utils/
+COPY packages/twenty-shared/package.json ./packages/twenty-shared/
+COPY packages/twenty-emails/package.json ./packages/twenty-emails/
 
 # Install dependencies
 RUN yarn install --immutable
@@ -63,8 +68,9 @@ COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/package.json ./package.json
 COPY --from=base /app/yarn.lock ./yarn.lock
 
-# Create storage directory
-RUN mkdir -p .local-storage
+# Create storage directories with proper permissions
+RUN mkdir -p .local-storage docker-data && \
+    chown -R node:node .local-storage docker-data
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
