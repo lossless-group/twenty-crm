@@ -44,9 +44,10 @@ RUN yarn install
 # Copy source code
 COPY . ./
 
-# Build the application
-RUN yarn nx build twenty-server
-RUN yarn nx build twenty-front
+# Build the application (disable Nx daemon for Docker stability)
+    ENV NX_DAEMON=false
+    RUN yarn nx build twenty-server
+    RUN yarn nx build twenty-front
 
 # Production stage
 FROM node:24.5.0-alpine AS production
