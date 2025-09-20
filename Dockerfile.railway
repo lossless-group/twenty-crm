@@ -1,4 +1,4 @@
-# Railway-optimized Dockerfile for Twenty CRM
+# Railway Deployment Dockerfile for Twenty CRM
 FROM node:24.5.0-alpine AS base
 
 # Install system dependencies
@@ -23,31 +23,21 @@ COPY package.json yarn.lock ./
 COPY .yarnrc.yml ./
 COPY .yarn ./.yarn
 
-# Create workspace directories for all packages
-RUN mkdir -p packages/twenty-server packages/twenty-front packages/twenty-ui packages/twenty-utils packages/twenty-shared packages/twenty-emails packages/twenty-zapier packages/twenty-website packages/twenty-e2e-testing packages/twenty-apps packages/twenty-cli packages/twenty-docker
-
 # Copy workspace package.json files
 COPY packages/twenty-server/package.json ./packages/twenty-server/
 COPY packages/twenty-front/package.json ./packages/twenty-front/
 COPY packages/twenty-ui/package.json ./packages/twenty-ui/
 COPY packages/twenty-utils/package.json ./packages/twenty-utils/
-COPY packages/twenty-shared/package.json ./packages/twenty-shared/
-COPY packages/twenty-emails/package.json ./packages/twenty-emails/
 
-# Copy patches directory (required for yarn install)
-RUN mkdir -p ./packages/twenty-server/patches
-COPY packages/twenty-server/patches/ ./packages/twenty-server/patches/
-
-# Install dependencies (permissive mode for build environment)
-RUN yarn install
+# Install dependencies
+RUN yarn install --immutable
 
 # Copy source code
-COPY . ./
+COPY . .
 
-# Build the application (disable Nx daemon for Docker stability)
-    ENV NX_DAEMON=false
-    RUN yarn nx build twenty-server
-    RUN yarn nx build twenty-front
+# Build the application
+RUN yarn nx build twenty-server
+RUN yarn nx build twenty-front
 
 # Production stage
 FROM node:24.5.0-alpine AS production
@@ -59,7 +49,6 @@ RUN apk add --no-cache \
     musl \
     giflib \
     pixman \
-    pangomm \
     libjpeg-turbo \
     freetype
 
@@ -72,19 +61,12 @@ COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/package.json ./package.json
 COPY --from=base /app/yarn.lock ./yarn.lock
 
-# Create storage directories with proper permissions
-RUN mkdir -p .local-storage docker-data && \
-    chown -R node:node .local-storage docker-data
+# Expose port
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
-
-# Switch to non-root user
-USER node
-
-# Expose port
-EXPOSE 3000
 
 # Start the application
 CMD ["node", "dist/packages/twenty-server/main.js"]
